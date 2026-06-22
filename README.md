@@ -9,45 +9,44 @@ how to run things.
 Next.js (App Router) · TanStack Query · Zustand (form-draft state only) · Tailwind ·
 Storybook · Vitest (+ Testing Library, Playwright)
 
-## Requisitos
+## Requirements
 
 - Node.js 18.18+ (Next.js 16 requirement)
 - npm
 
-## Instalación
+## Installation
 
 ```bash
 npm install
 ```
 
-## Correr la app
+## Running the app
 
 ```bash
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000). Hay dos vistas:
+Open [http://localhost:3000](http://localhost:3000). Two views are available:
 
-- `/employee` — balances per-location + formulario de solicitud (employee fijo: `emp-1`, sin auth)
-- `/manager` — solicitudes pendientes con aprobar/denegar
+- `/employee` — per-location balances + time-off request form (fixed employee: `emp-1`, no auth)
+- `/manager` — pending requests with approve/deny actions
 
-El mock HCM vive en `src/app/api/hcm/*` (route handlers reales de Next.js) y persiste su
-estado en un archivo local `.hcm-store.json` en la raíz del proyecto (gitignored). Bórralo o
-reinicia el server para volver al estado semilla:
+The mock HCM lives in `src/app/api/hcm/*` (real Next.js route handlers) and persists its
+state in a local `.hcm-store.json` file at the project root (gitignored). Delete it or restart
+the server to reset to the seeded state:
 
-| Endpoint | Qué hace |
+| Endpoint | What it does |
 |---|---|
-| `GET /api/hcm/balance?employeeId=&locationId=` | Read real-time de un balance |
-| `POST /api/hcm/balance` | Write administrativo de un balance |
-| `GET /api/hcm/balances/batch?employeeId=` | Corpus completo (para hidratación inicial) |
-| `GET\|POST /api/hcm/request` | Listar pendientes / submit de una solicitud |
-| `PATCH /api/hcm/request/:id` | Aprobar o denegar |
-| `POST /api/hcm/anniversary` | Trigger manual del bonus de aniversario |
+| `GET /api/hcm/balance?employeeId=&locationId=` | Real-time read of a single balance |
+| `POST /api/hcm/balance` | Admin write of a balance |
+| `GET /api/hcm/balances/batch?employeeId=` | Full corpus (for initial hydration) |
+| `GET\|POST /api/hcm/request` | List requests / submit a time-off request |
+| `PATCH /api/hcm/request/:id` | Approve or deny |
+| `POST /api/hcm/anniversary` | Manual trigger for the anniversary bonus |
 
-Cualquier endpoint de escritura acepta `force: "insufficient" | "silent-failure" | "none"` en
-el body para forzar un escenario específico (usado por los tests de integración). Sin `force`,
-hay ~15% de probabilidad de silent-failure real, para explorar el comportamiento a mano desde
-el navegador.
+Any write endpoint accepts `force: "insufficient" | "silent-failure" | "none"` in the request
+body to force a specific scenario (used by integration tests). Without `force`, there is a ~15%
+chance of a real silent failure, so the behavior can be explored manually from the browser.
 
 ## Storybook
 
@@ -55,12 +54,12 @@ el navegador.
 npm run storybook
 ```
 
-Abre [http://localhost:6006](http://localhost:6006). Cubre los 10 estados UI requeridos:
+Opens [http://localhost:6006](http://localhost:6006). Covers all 10 required UI states:
 `loading`, `empty`, `stale`, `optimistic-pending`, `optimistic-rolled-back`, `HCM-rejected`,
 `HCM-silently-wrong`, `balance-refreshed-mid-session`, `manager-approval-with-stale-balance`,
 `insufficient-balance`.
 
-Build estático (por si se quiere desplegar a Vercel/Chromatic):
+Static build (for deploying to Vercel/Chromatic):
 
 ```bash
 npm run build-storybook
@@ -68,47 +67,47 @@ npm run build-storybook
 
 ## Tests
 
-Tres capas (ver TRD §8 para qué regresión previene cada una):
+Three layers (see TRD §8 for what regression each one prevents):
 
 ```bash
-npm run test             # component tests + unit tests del store (Vitest + RTL, fetch mockeado)
-npm run test:storybook   # interaction tests de Storybook (modo browser, Playwright)
-npm run test:all         # las dos suites anteriores
-npm run test:coverage    # con reporte de cobertura (v8)
+npm run test             # component tests + store unit tests (Vitest + RTL, fetch mocked)
+npm run test:storybook   # Storybook interaction tests (browser mode, Playwright)
+npm run test:all         # both suites above
+npm run test:coverage    # with coverage report (v8)
 ```
 
-Los integration tests (`src/app/api/hcm/integration.test.js`) llaman los route handlers reales
-sin mockear nada — corren dentro de `npm run test`.
+Integration tests (`src/app/api/hcm/integration.test.js`) call the real route handlers
+with nothing mocked — they run inside `npm run test`.
 
-Cobertura actual (`npm run test:coverage`): ~93% líneas, ~86% statements.
+Current coverage (`npm run test:coverage`): ~93% lines, ~86% statements.
 
-## Build de producción
+## Production build
 
 ```bash
 npm run build
 npm run start
 ```
 
-## Estructura relevante
+## Relevant structure
 
 ```
 src/
   app/
     api/hcm/         # mock HCM (route handlers)
-    employee/        # vista Employee
-    manager/         # vista Manager
+    employee/        # Employee view
+    manager/         # Manager view
   components/
     employee/        # BalanceCard, RequestFeedback, TimeOffRequestForm, ...
     manager/         # BalanceContext, ApproveDenyButtons, RequestRow, ...
   hooks/             # useBalance, useSubmitTimeOffRequest, useDecideRequest, ...
-  lib/hcm/           # store.js (mock HCM persistido en disco) + client.js (fetch wrapper)
-  store/             # Zustand: form draft + integridad de balance
-TRD.md               # documento técnico completo
+  lib/hcm/           # store.js (disk-persisted mock HCM) + client.js (fetch wrapper)
+  store/             # Zustand: form draft + balance integrity
+TRD.md               # full technical requirements document
 ```
 
-## Notas
+## Notes
 
-- No hay autenticación: `src/lib/currentUser.js` fija un employee de demo (`emp-1`).
-- El store del mock HCM persiste en disco (no en memoria) a propósito: Next.js en dev
-  (Turbopack) puede compilar cada route handler en un bundle distinto, lo que duplicaría el
-  estado en memoria entre rutas. Ver el comentario al inicio de `src/lib/hcm/store.js`.
+- No authentication: `src/lib/currentUser.js` fixes a demo employee (`emp-1`).
+- The mock HCM store persists to disk (not memory) intentionally: Next.js in dev
+  (Turbopack) may compile each route handler into a separate bundle, which would duplicate
+  in-memory state across routes. See the comment at the top of `src/lib/hcm/store.js`.
